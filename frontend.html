@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>License Plate Recognition</title>
+</head>
+<body>
+    <h2>Live Camera</h2>
+    <video id="video" width="400" autoplay></video><br>
+    <button onclick="captureAndDetect()">Capture & Detect</button>
+
+    <p><strong>Instructions:</strong> Hold the license plate clearly facing the webcam. Avoid glare and keep it centered.</p>
+
+    <h3>Detected Plate:</h3>
+    <input type="text" id="plate" readonly style="width:300px; font-size:20px;"><br><br>
+
+    <h3>Enter Student ID:</h3>
+    <input type="text" id="student" placeholder="Student ID" style="width:300px; font-size:20px;"><br><br>
+
+    <button onclick="submitEntry()">Enter Vehicle</button>
+    <button onclick="submitExit()">Exit Vehicle</button>
+
+    <canvas id="canvas" width="400" style="display:none;"></canvas>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const plateInput = document.getElementById("plate");
+
+        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+            video.srcObject = stream;
+        });
+
+        function captureAndDetect() {
+            const context = canvas.getContext("2d");
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const base64 = canvas.toDataURL("image/jpeg").split(',')[1];
+
+            fetch("/detect_base64", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image_data: base64 })
+            })
+            .then(res => res.json())
+            .then(data => {
+                plateInput.value = data.plate;
+            })
+            .catch(error => {
+                console.error("Detection failed:", error);
+                alert("Could not detect license plate.");
+            });
+        }
+
+        function submitEntry() {
+        const student = document.getElementById("student").value;
+        const bike = document.getElementById("plate").value;
+
+        fetch("http://192.168.137.1:8001/user/bike_enter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ student_id: student, bike: bike })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert("Entry Status:\n" + JSON.stringify(data, null, 2));
+        })
+        .catch(error => {
+            console.error("Entry failed:", error);
+            alert("Entry failed. Check server or network.");
+        });
+    }
+
+    function submitExit() {
+        const student = document.getElementById("student").value;
+        const bike = document.getElementById("plate").value;
+
+        fetch("http://192.168.137.1:8001/user/bike_exit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ student_id: student, bike: bike })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert("Exit Status:\n" + JSON.stringify(data, null, 2));
+        })
+        .catch(error => {
+            console.error("Exit failed:", error);
+            alert("Exit failed. Check server or network.");
+        });
+    }
+
+    </script>
+</body>
+</html>
