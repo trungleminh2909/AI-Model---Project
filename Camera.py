@@ -9,6 +9,7 @@ import cv2
 from ultralytics import YOLO
 from paddleocr import PaddleOCR
 import base64
+from fastapi.responses import RedirectResponse
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="."), name="static")
@@ -32,7 +33,7 @@ def detect_and_read_plate_from_array(image_array: np.ndarray) -> str:
     boxes = results[0].boxes.xyxy.cpu().numpy()
 
     if len(boxes) == 0:
-        print("[⚠️ DEBUG] No plate detected")
+        print("[DEBUG] No plate detected")
         return "No license plate detected."
 
     x1, y1, x2, y2 = map(int, boxes[0])
@@ -55,7 +56,7 @@ def detect_and_read_plate_from_array(image_array: np.ndarray) -> str:
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    return open("frontend.html", encoding="utf-8").read()
+    return open("qr_scan.html", encoding="utf-8").read()
 
 class DetectPayload(BaseModel):
     image_data: str
@@ -81,3 +82,12 @@ async def submit_entry(data: SubmitPayload):
 async def submit_exit(data: SubmitPayload):
     print(f"[EXIT] Student: {data.student} - Plate: {data.bike}")
     return {"status": "exit recorded", "student": data.student, "bike": data.bike}
+
+## QR code ##
+@app.get("/scan", response_class=HTMLResponse)
+async def qr_page():
+    return open("qr_scan.html", encoding="utf-8").read()
+
+@app.get("/plate", response_class=HTMLResponse)
+async def plate_page():
+    return open("plate_detect.html", encoding="utf-8").read()

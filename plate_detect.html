@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>License Plate Recognition</title>
+</head>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f9;
+        margin: 0;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    h2 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    a {
+        text-decoration: none;
+        color: #3498db;
+        font-weight: bold;
+    }
+
+    #video {
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        margin: 10px 0;
+    }
+
+    button {
+        padding: 10px 20px;
+        margin: 10px 5px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        background-color: #2ecc71;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #27ae60;
+    }
+
+    .danger {
+        background-color: #e74c3c;
+    }
+
+    .danger:hover {
+        background-color: #c0392b;
+    }
+
+    input[type="text"] {
+        padding: 10px;
+        font-size: 18px;
+        width: 300px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fff;
+        margin-bottom: 20px;
+    }
+
+    p {
+        max-width: 500px;
+        text-align: center;
+        color: #555;
+        margin-bottom: 20px;
+    }
+
+    canvas {
+        display: none;
+    }
+</style>
+
+<body>
+    <h2>Live Camera</h2>
+    <div>
+        <a href="/">QR</a>
+    </div>
+    <video id="video" width="400" autoplay></video><br>
+    <button onclick="captureAndDetect()">Capture & Detect</button>
+
+    <p><strong>Instructions:</strong> Hold the license plate clearly facing the webcam. Avoid glare and keep it centered.</p>
+
+    <h3>Detected Plate:</h3>
+    <input type="text" id="student" readonly value="" style="width:300px; font-size:20px;"><br><br>
+
+    <h3>Detected Plate:</h3>
+    <input type="text" id="plate" readonly style="width:300px; font-size:20px;"><br><br>
+
+    <input type="hidden" id="student">
+
+    <button onclick="submitEntry()">Enter Vehicle</button>
+    <button onclick="submitExit()">Exit Vehicle</button>
+
+    <canvas id="canvas" width="400" style="display:none;"></canvas>
+
+    <script>
+
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const plateInput = document.getElementById("plate");
+        const studentInput = document.getElementById("student");
+
+        // Get student ID from query param
+        const urlParams = new URLSearchParams(window.location.search);
+        studentInput.value = urlParams.get("student") || "";
+
+        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+            video.srcObject = stream;
+        });
+
+        function captureAndDetect() {
+            const context = canvas.getContext("2d");
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const base64 = canvas.toDataURL("image/jpeg").split(',')[1];
+
+            fetch("/detect_base64", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image_data: base64 })
+            })
+            .then(res => res.json())
+            .then(data => {
+                plateInput.value = data.plate;
+            })
+            .catch(error => {
+                console.error("Detection failed:", error);
+                alert("Could not detect license plate.");
+            });
+        }
+
+        function submitEntry() {
+            const student = studentInput.value;
+            const bike = plateInput.value;
+
+            fetch("/enter", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ student_id: student, bike: bike })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert("Entry Status:\n" + JSON.stringify(data, null, 2));
+            })
+            .catch(error => {
+                console.error("Entry failed:", error);
+                alert("Entry failed. Check server or network.");
+            });
+        }
+
+        function submitExit() {
+            const student = studentInput.value;
+            const bike = plateInput.value;
+
+            fetch("/exit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ student_id: student, bike: bike })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert("Exit Status:\n" + JSON.stringify(data, null, 2));
+            })
+            .catch(error => {
+                console.error("Exit failed:", error);
+                alert("Exit failed. Check server or network.");
+            });
+        }
+    </script>
+</body>
+</html>
