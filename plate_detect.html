@@ -4,103 +4,186 @@
     <meta charset="UTF-8">
     <title>License Plate Recognition</title>
 </head>
-
 <style>
     body {
-        font-family: Arial, sans-serif;
-        background: #f4f6f9;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #eef2f7;
         margin: 0;
         padding: 40px;
         display: flex;
         flex-direction: column;
         align-items: center;
+        min-height: 100vh;
+    }
+
+    .container {
+        width: 400px;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
     }
 
     h2 {
-        color: #2c3e50;
-        margin-bottom: 10px;
+        color: #34495e;
+        margin-bottom: 20px;
+        text-align: center;
     }
 
-    a {
-        text-decoration: none;
-        color: #3498db;
+    label {
         font-weight: bold;
+        color: #2c3e50;
+        font-size: 16px;
+    }
+
+    input[type="text"] {
+        width: calc(100% - 20px);
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #f9f9f9;
     }
 
     #video {
-        border: 2px solid #ccc;
+        border: 3px solid #2c3e50;
         border-radius: 10px;
-        margin: 10px 0;
+        margin: 20px 0;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        align-self: center;
     }
 
     button {
-        padding: 10px 20px;
-        margin: 10px 5px;
+        padding: 12px;
+        width: 100%;
         font-size: 16px;
         border: none;
         border-radius: 8px;
-        background-color: #2ecc71;
+        background-color: #3498db;
         color: white;
         cursor: pointer;
         transition: background-color 0.3s ease;
     }
 
     button:hover {
-        background-color: #27ae60;
+        background-color: #2980b9;
     }
 
-    .danger {
+    button.danger {
         background-color: #e74c3c;
     }
 
-    .danger:hover {
+    button.danger:hover {
         background-color: #c0392b;
     }
 
-    input[type="text"] {
-        padding: 10px;
-        font-size: 18px;
-        width: 300px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        background: #fff;
-        margin-bottom: 20px;
+    p {
+        font-size: 14px;
+        color: #555;
+        margin: 10px 0;
+        text-align: left;
     }
 
-    p {
-        max-width: 500px;
+    a.back {
+        display: inline-block;
+        margin-top: 5px;
+        font-size: 14px;
+        text-decoration: none;
+        color: white;
+        background-color: #7f8c8d;
+        padding: 8px 16px;
+        border-radius: 6px;
         text-align: center;
-        color: #555;
-        margin-bottom: 20px;
+        transition: background-color 0.3s ease;
+    }
+
+    a.back:hover {
+        background-color: #616a6b;
+    }
+
+    h3 {
+        margin-top: 10px;
+        color: #34495e;
     }
 
     canvas {
         display: none;
     }
+
+    .buttons {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .buttons button {
+        flex: 1;
+        padding: 12px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        background-color: #3498db;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .buttons button:hover {
+        background-color: #2980b9;
+    }
+
+    .buttons button.danger {
+        background-color: #e74c3c;
+    }
+
+    .buttons button.danger:hover {
+        background-color: #c0392b;
+    }
+
+    .buttons button.success {
+        background-color: #3ce74a;
+    }
+
+    .buttons button.success:hover {
+        background-color: #2daa37;
+    }
 </style>
 
+
+
+
 <body>
-    <h2>Live Camera</h2>
-    <div>
-        <a href="/">QR</a>
+    <h2>Scan Vehicle License Plate</h2>
+
+    <div class="container">
+        <h3>Student ID</h3>
+        <input type="text" id="student" readonly>
+        <a class="back" href="/">Go Back</a>
+        
+        <h3>Capture & Detect</h3>
+        <video id="video" width="400" autoplay></video>
+
+        <p><strong>Instructions:</strong> Hold the license plate clearly facing the webcam. Avoid glare, keep it centered and click "Detect Plate".</p>
+
+        <button onclick="captureAndDetect()">Detect Plate</button>
+
+        <h3>Detected Plate</h3>
+        <input type="text" id="plate" readonly>
+
+        <h3>Vehicle Type</h3>
+        <div class="buttons">
+            <button class="success" onclick="submitEntry()">Enter Vehicle</button>
+            <button class="danger" onclick="submitExit()">Exit Vehicle</button>
+        </div>        
     </div>
-    <video id="video" width="400" autoplay></video><br>
-    <button onclick="captureAndDetect()">Capture & Detect</button>
-
-    <p><strong>Instructions:</strong> Hold the license plate clearly facing the webcam. Avoid glare and keep it centered.</p>
-
-    <h3>Detected Plate:</h3>
-    <input type="text" id="student" readonly value="" style="width:300px; font-size:20px;"><br><br>
-
-    <h3>Detected Plate:</h3>
-    <input type="text" id="plate" readonly style="width:300px; font-size:20px;"><br><br>
-
-    <input type="hidden" id="student">
-
-    <button onclick="submitEntry()">Enter Vehicle</button>
-    <button onclick="submitExit()">Exit Vehicle</button>
 
     <canvas id="canvas" width="400" style="display:none;"></canvas>
+
 
     <script>
 
