@@ -27,6 +27,18 @@
         const canvas = document.getElementById("canvas");
         const plateInput = document.getElementById("plate");
 
+        let backendBaseURL = "";
+
+        fetch("/config")
+        .then(res => res.json())
+        .then(config => {
+            backendBaseURL = `http://${config.BACKEND_IP}:${config.BACKEND_PORT}`;
+        })
+        .catch(err => {
+            console.error("Failed to load backend config:", err);
+            alert("Could not load server configuration.");
+        });
+
         navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
             video.srcObject = stream;
         });
@@ -55,14 +67,14 @@
         const student = document.getElementById("student").value;
         const bike = document.getElementById("plate").value;
 
-        fetch("http://192.168.137.1:8001/user/bike_enter", {
+        fetch(`${backendBaseURL}/user/bike_enter`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ student_id: student, bike: bike })
         })
         .then(res => res.json())
         .then(data => {
-            alert("Entry Status:\n" + JSON.stringify(data, null, 2));
+            alert(`Exit Status:\n- Student ID: ${data.input.student_id}\n- Plate number: ${data.input.bike}`);
         })
         .catch(error => {
             console.error("Entry failed:", error);
@@ -74,14 +86,14 @@
         const student = document.getElementById("student").value;
         const bike = document.getElementById("plate").value;
 
-        fetch("http://192.168.137.1:8001/user/bike_exit", {
+        fetch(`${backendBaseURL}/user/bike_exit`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ student_id: student, bike: bike })
         })
         .then(res => res.json())
         .then(data => {
-            alert("Exit Status:\n" + JSON.stringify(data, null, 2));
+            alert(`Exit Status:\n- Student ID: ${data.input.student_id}\n- Plate number: ${data.input.bike}`);
         })
         .catch(error => {
             console.error("Exit failed:", error);

@@ -250,7 +250,7 @@
             })
             .then(res => res.json())
             .then(data => {
-                alert("Exit Status:\n" + JSON.stringify(data, null, 2));
+                alert(`Exit Status:\n- Student ID: ${data["input"].get("student_id")}\n- Plate number: ${data["input"].get("bike")}`);
             })
             .catch(error => {
                 console.error("Exit failed:", error);
