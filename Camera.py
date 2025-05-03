@@ -10,6 +10,7 @@ from ultralytics import YOLO
 from paddleocr import PaddleOCR
 import base64
 from fastapi.responses import RedirectResponse
+import os
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="."), name="static")
@@ -91,3 +92,10 @@ async def qr_page():
 @app.get("/plate", response_class=HTMLResponse)
 async def plate_page():
     return open("plate_detect.html", encoding="utf-8").read()
+
+@app.get("/config")
+def get_config():
+    return {
+        "BACKEND_IP": os.getenv("BACKEND_IP"),
+        "BACKEND_PORT": os.getenv("BACKEND_PORT")
+    }
