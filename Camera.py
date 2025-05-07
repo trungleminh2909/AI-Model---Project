@@ -11,6 +11,9 @@ from paddleocr import PaddleOCR
 import base64
 from fastapi.responses import RedirectResponse
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="."), name="static")
@@ -98,4 +101,6 @@ def get_config():
     return {
         "BACKEND_IP": os.getenv("BACKEND_IP"),
         "BACKEND_PORT": os.getenv("BACKEND_PORT")
+        # "BACKEND_IP": "192.168.137.1",
+        # "BACKEND_PORT": "8000"
     }

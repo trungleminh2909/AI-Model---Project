@@ -195,6 +195,19 @@
         // Get student ID from query param
         const urlParams = new URLSearchParams(window.location.search);
         studentInput.value = urlParams.get("student") || "";
+        
+        let backendBaseURL = "";
+
+        fetch("/config")
+        .then(res => res.json())
+        .then(config => {
+            backendBaseURL = `http://${config.BACKEND_IP}:${config.BACKEND_PORT}`;
+            console.log(backendBaseURL)
+        })
+        .catch(err => {
+            console.error("Failed to load backend config:", err);
+            alert("Could not load server configuration.");
+        });
 
         navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
             video.srcObject = stream;
@@ -220,43 +233,115 @@
             });
         }
 
-        function submitEntry() {
+        // function submitEntry() {
+        //     const student = studentInput.value;
+        //     const bike = plateInput.value;
+
+        //     fetch(`${backendBaseURL}/user/bike_enter`,{
+        //         method: "POST",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify({ student_id: student, bike: bike })
+        //     })
+        //     // .then(res => res.json())
+        //     .then(async res => {
+        //         console.log(res)
+        //         if (!res.ok) {
+        //             const errorText = await res.text();  // fallback if server doesn't return JSON
+        //             throw new Error(`Error ${res.status}: ${errorText}`);
+        //         }
+        //         return res.json();
+        //     })
+        //     .then(data => {
+        //         alert(`Entry Status:\n- Student ID: ${data.input.student_id}\n- Plate number: ${data.input.bike}`);
+        //     })
+        //     .catch(async error => {
+        //         alert("Entry failed: " + error.message || JSON.stringify(error));
+        //     });
+
+        // }
+        async function submitEntry() {
             const student = studentInput.value;
             const bike = plateInput.value;
 
-            fetch("/enter", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ student_id: student, bike: bike })
-            })
-            .then(res => res.json())
-            .then(data => {
-                alert(`Entry Status:\n- Student ID: ${data.input.student_id}\n- Plate number: ${data.input.bike}`);
-            })
-            .catch(error => {
-                console.error("Entry failed:", error);
-                alert("Entry failed. Check server or network.");
-            });
+            try {
+                const res = await fetch(`${backendBaseURL}/user/bike_enter`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ student_id: student, bike: bike })
+                });
+
+                if (!res.ok) {
+                    // Try to parse error detail from JSON
+                    let errorData;
+                    try {
+                        errorData = await res.json();
+                        if (errorData.detail) {
+                            alert("Entry failed: " + errorData.detail);
+                        } else {
+                            alert("Entry failed: Unexpected server error.");
+                        }
+                    } catch (e) {
+                        // If parsing fails, fallback to raw text
+                        const errorText = await res.text();
+                        alert("Entry failed: " + errorText);
+                    }
+                    return;
+                }
+
+                // If successful
+                const data = await res.json();
+                alert("Entry successful!");
+                console.log("Entry data:", data);
+
+                window.location.href = "/"
+
+            } catch (err) {
+                // Catch network errors
+                console.error("Network error:", err);
+                alert("Entry failed: Cannot connect to server.");
+            }
         }
 
-        function submitExit() {
+
+        async function submitExit() {
             const student = studentInput.value;
             const bike = plateInput.value;
 
-            fetch("/exit", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ student_id: student, bike: bike })
-            })
-            .then(res => res.json())
-            .then(data => {
-                alert(`Exit Status:\n- Student ID: ${data.input.student_id}\n- Plate number: ${data.input.bike}`);
-            })
-            .catch(error => {
-                console.error("Exit failed:", error);
-                alert("Exit failed. Check server or network.");
-            });
+            try {
+                const res = await fetch(`${backendBaseURL}/user/bike_exit`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ student_id: student, bike: bike })
+                });
+
+                if (!res.ok) {
+                    let errorData;
+                    try {
+                        errorData = await res.json();
+                        if (errorData.detail) {
+                            alert("Exit failed: " + errorData.detail);
+                        } else {
+                            alert("Exit failed: Unexpected server error.");
+                        }
+                    } catch (e) {
+                        const errorText = await res.text();
+                        alert("Exit failed: " + errorText);
+                    }
+                    return;
+                }
+
+                const data = await res.json();
+                alert("Exit successful!");
+                console.log("Exit data:", data);
+
+                window.location.href = "/"
+
+            } catch (err) {
+                console.error("Network error:", err);
+                alert("Exit failed: Cannot connect to server.");
+            }
         }
+
     </script>
 </body>
 </html>
