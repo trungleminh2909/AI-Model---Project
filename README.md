@@ -35,7 +35,7 @@ This repository provides a comprehensive pipeline for **student verification** a
 3. **Install dependencies**
 
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirement.txt
    ```
 
 4. **Configure environment variables**
